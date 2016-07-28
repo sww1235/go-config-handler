@@ -3,30 +3,32 @@ package configHandler
 import (
 	"encoding/json"
 	"io/ioutil"
+	"reflect"
 )
 
 //Configuration stores the configuration that is read in and out from a file
-type Configuration struct {
-	ConfigPath string `json:"configpath"`
-	IPConfig   string
-	RecipePath string
-}
+type Configuration interface{}
 
-func readConfig(filename string) (Configuration, error) {
+//ReadConfigJSON reads a JSON encoded configuration file into a
+//Configuration struct
+func ReadConfigJSON(filename string, configType interface{}) (Configuration, error) {
+	readConfigTypeTemp := reflect.TypeOf(configType)
+	readConfigType := readConfigTypeTemp.Kind()
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return Configuration{}, err
+		return readConfigType, err
 	}
-	var config Configuration
+	var config readConfigType
 	err = json.Unmarshal(bytes, &config)
 
 	if err != nil {
-		return Configuration{}, err
+		return readConfigType, err
 	}
 	return config, nil
 }
 
-func writeConfig(c Configuration, filename string) error {
+//WriteConfigJSON writes a configuration struct into the specified file
+func WriteConfigJSON(c Configuration, filename string) error {
 	bytes, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
